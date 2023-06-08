@@ -13,11 +13,13 @@ $Global:NIF = [Convert]::FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAA
 #### Define Functions
 function Load-Logo {
     $img_Logo = New-Object System.Windows.Forms.PictureBox
-    $img_Logo.Location = New-Object System.Drawing.Size(27,10)
+    $img_Logo.Location = New-Object System.Drawing.Size(0,10)
+    $img_Logo.Width = 600
+    $img_Logo.Height = 60
     $ms = New-Object System.IO.MemoryStream(,$Logo)
     $Banner = [System.Drawing.Image]::FromStream($ms)
     $img_Logo.Image = $Banner
-    $img_Logo.AutoSize = $true
+    $img_Logo.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::CenterImage
     $main_form.Controls.Add($img_Logo)
 }
 
@@ -43,18 +45,20 @@ function Populate-Dropdown() {
 }
 
 function Open-File(){
-    $main_form.Controls.Remove($img_NewPhoto)
     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
         InitialDirectory = [Environment]::GetFolderPath('Desktop') 
         Filter = 'Pictures (*.jpg;*.png;*.bmp)|*.jpg;*.png;*.bmp'
     }
     $FileBrowser.ShowDialog() |  Out-Null
-    $UName = ($UArray |? {$_.Name -eq $cbx_UserSelection.Text}).Login
-    $NewImage = Resize-Image $FileBrowser.FileName $UName
-    $img_NewPhoto.Image = $NewImage
-    $img_NewPhoto.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::CenterImage
-    $main_form.Controls.Add($img_NewPhoto)
-    $btn_Submit.Enabled = $true
+    if ($FileBrowser.FileName) {
+        $main_form.Controls.Remove($img_NewPhoto)
+        $UName = ($UArray |? {$_.Name -eq $cbx_UserSelection.Text}).Login
+        $NewImage = Resize-Image $FileBrowser.FileName $UName
+        $img_NewPhoto.Image = $NewImage
+        $img_NewPhoto.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::CenterImage
+        $main_form.Controls.Add($img_NewPhoto)
+        $btn_Submit.Enabled = $true
+    }
 } 
 
 function Resize-Image ([string]$SelectedImage, [string]$UName) {
@@ -66,13 +70,13 @@ function Resize-Image ([string]$SelectedImage, [string]$UName) {
     $Bitmap = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Width, $Height
     $NewImage = [System.Drawing.Graphics]::FromImage($Bitmap)
     $NewImage.DrawImage($NewPhoto, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
-    $memory = New-Object System.IO.MemoryStream
-    $Bitmap.Save($memory, [System.Drawing.Imaging.ImageFormat]::Bmp)
-    $Global:Bytes = $memory.ToArray()
-    $memory.Flush()
-    $memory = New-Object System.IO.MemoryStream(,$Bytes)
+    $ms = New-Object System.IO.MemoryStream
+    $Bitmap.Save($ms, [System.Drawing.Imaging.ImageFormat]::Bmp)
+    $Global:Bytes = $ms.ToArray()
+    $ms.Flush()
+    $ms = New-Object System.IO.MemoryStream(,$Bytes)
 
-    return [System.Drawing.Image]::FromStream($memory)
+    return [System.Drawing.Image]::FromStream($ms)
 }
 
 function Update-Photo([string] $operation){
@@ -84,11 +88,11 @@ function Update-Photo([string] $operation){
             Set-ADUser $Login -Clear thumbnailPhoto
             Get-Message "Successfully cleared photo." "Success"
         }
+        Get-Users
+        Get-Thumbnail
     } Catch {
         Get-Message $Error[0] "Error"
     }
-    Get-Users
-    Get-Thumbnail
 }
 
 function Get-Thumbnail(){
@@ -127,7 +131,7 @@ $main_form = New-Object System.Windows.Forms.Form
 $main_form.Text ='Update Active Directory Thumbnail Photo'
 $main_form.Width = 600
 $main_form.Height = 400
-$main_form.AutoSize = $false
+$main_form.AutoSize = $true
 
 #### Load Logo Onto Form
 #Load-Logo
