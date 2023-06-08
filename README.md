@@ -12,7 +12,7 @@ $Global:Logo = [Convert]::FromBase64String("<OUTPUT HERE>")
 ```
 
 Uncomment 
-Line 133:
+Line 137:
 ```
 #### Load Logo Onto Form
 Load-Logo
