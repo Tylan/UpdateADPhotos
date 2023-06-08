@@ -129,7 +129,7 @@ $main_form.Width = 600
 $main_form.Height = 400
 $main_form.AutoSize = $false
 
-#### Load Bank Logo Onto Form
+#### Load Logo Onto Form
 #Load-Logo
 
 #### Define all text based fields
